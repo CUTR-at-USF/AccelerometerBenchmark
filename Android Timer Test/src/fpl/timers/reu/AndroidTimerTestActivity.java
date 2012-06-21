@@ -1,19 +1,39 @@
 package fpl.timers.reu;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Timer;
 import java.util.TimerTask;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
+import android.os.BatteryManager;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
-public class AndroidTimerTestActivity extends Activity {
+public class AndroidTimerTestActivity extends Activity implements SensorEventListener {
 
-  public static String TAG = "TimerTest";
-
+  public static String BatteryTag = "Battery";
+  public static String SensorTag = "Sensor";
+  public static String TimerTag = "Timer";
+  public static String TAG = "Start";
+  public static String TaskTag = "Task";
+  public static String AccelTag = "Accelerometer";
   /** Called when the activity is first created. */
 
   Timer timer1 = new Timer();
@@ -28,18 +48,79 @@ public class AndroidTimerTestActivity extends Activity {
   private boolean on = false;
 
   Button startTimer;
+  
+  SensorManager mSensorManager;
+  Sensor mAccelerometer;
+  
+//battery variables
+	int scale = -1;
+	int level = -1;
+	int voltage = -1;
+	int temp = -1;
+	
+	File root;
+	File fileDir;
+	File file;
+	FileWriter filewriter;
+	BufferedWriter out;
 
+	//time variables
+	Date timestamp;
+	Date datestamp;
+	SimpleDateFormat csvFormatter;
+	String csvFormattedDate;
+	final int interval=5000;
+	
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.main);
 
-    startTimer = (Button) findViewById(R.id.btnStartTimer);
+    mSensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
+    mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+    
+  //----------------------------------------------------------------------------------------------------------------------CSVFile---------------
+  		csvFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");  //formatter for CSV timestamp field
+  		//crashes with adding  HH:mm:ss
 
+  		datestamp = new Date();
+  		SimpleDateFormat csvFrm = new SimpleDateFormat("yyyy-MM-dd");
+  		String csvFormatFile = csvFrm.format(datestamp);
+
+  		try {  
+
+
+  			// check for SDcard   
+  			root = Environment.getExternalStorageDirectory();  
+
+
+  			Log.i("Writter","path.." +root.getAbsolutePath());  
+
+
+  			//check sdcard permission  
+  			if (root.canWrite()){ 
+
+  				fileDir = new File(root.getAbsolutePath()+"/battery_data/");  
+  				fileDir.mkdirs();  
+
+  				file= new File(fileDir, csvFormatFile +"_interval" +"_"+ interval+".csv");  
+  				filewriter = new FileWriter(file);  
+  				out = new BufferedWriter(filewriter);
+
+  				out.write("DateTime+" +","+ "BatteryLevel(0-100)");  
+
+
+  			}  
+  		} catch (IOException e) {  
+  			Log.e("ERROR:---", "Could not write file to SDCard" + e.getMessage());  
+  		}  
+  		
+    startTimer = (Button) findViewById(R.id.btnStartTimer);
+    
     startTimer.setOnClickListener(new View.OnClickListener() {
       public void onClick(View v) {
         // Executes when the button is clicked
-        Log.d(TAG, "Clicked button");
+    	  Log.d(TAG,"Button Clicked");
         startTimer();
       }
     });
@@ -59,6 +140,15 @@ public class AndroidTimerTestActivity extends Activity {
     timer2.purge();
     timer2.cancel();
     timer2=null;
+    
+    unregisterReceiver(batteryReceiver);
+	try {
+		out.flush();
+		out.close();
+	} catch (IOException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+	}
     
     super.onDestroy();
   }
@@ -80,25 +170,26 @@ public class AndroidTimerTestActivity extends Activity {
     // TODO Auto-generated method stub
     if (on) {
       timer2.cancel();
-      Log.d(TAG, "canceled timer2");
-      Log.d(TAG, "On Value=" + on);
+      
+      Log.d(TimerTag, "canceled timer2");
+      //Log.d(TAG, "On Value=" + on);
       // Scheduling wait time until the next timer triggers, which will turn the
       // accel. on
       timer1 = new Timer();
       firsttask = new MyTimerTask1();
       timer1.schedule(firsttask, 3000, 3000);
-      Log.d(TAG, "scheduled timer1");
+      Log.d(TimerTag, "scheduled timer1");
       on = false;
     } else {
       timer1.cancel();
-      Log.d(TAG, "canceled timer1");
-      Log.d(TAG, "On Value=" + on);
+      Log.d(TimerTag, "canceled timer1");
+      Log.d(TimerTag, "On Value=" + on);
       // Scheduling on time until the next timer triggers, which will shut the
       // accel. off
       timer2 = new Timer();
       secondtask = new MyTimerTask2();
       timer2.schedule(secondtask, 5000, 5000);
-      Log.d(TAG, "scheduled timer2");
+      Log.d(TimerTag, "scheduled timer2");
       on = true;
     }
   }
@@ -111,15 +202,17 @@ public class AndroidTimerTestActivity extends Activity {
       handler1.post(new Runnable() {
         public void run() {
 
-          Log.d(TAG, "Running TimerTask1");
+          Log.d(TaskTag, "Running TimerTask1");
 
           // back on system thread
           if (activeAccel == false) {
 
-            Log.d(TAG, "Accelerometer is inactive - Turn On");
+            Log.d(AccelTag, "Accelerometer is inactive - Turn On");
 
             // TODO - accelerometer would be turned on here
-
+            mSensorManager.registerListener(AndroidTimerTestActivity.this,
+        			mAccelerometer,
+        			SensorManager.SENSOR_DELAY_FASTEST);
             activeAccel = true;
 
           }// end if
@@ -136,16 +229,18 @@ public class AndroidTimerTestActivity extends Activity {
       handler2.post(new Runnable() {
         public void run() {
 
-          Log.d(TAG, "Running TimerTask2");
+          Log.d(TaskTag, "Running TimerTask2");
 
           // back on system thread
           if (activeAccel == true) {
 
-            Log.d(TAG, "Accelerometer is active - Turn Off");
+            Log.d(AccelTag, "Accelerometer is active - Turn Off");
             // battery();
+            IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+			registerReceiver(batteryReceiver, filter);
 
             // TODO - accelerometer would be turned off here
-
+            mSensorManager.unregisterListener(AndroidTimerTestActivity.this,mAccelerometer);
             activeAccel = false;
           }// end if
 
@@ -154,6 +249,43 @@ public class AndroidTimerTestActivity extends Activity {
       });// end of handler.post
     }// end of run
     
-  };// end of secondtask
+  }//end of secondtask
+public void onAccuracyChanged(Sensor sensor, int accuracy) {
+	// TODO Auto-generated method stub
+	
+}
+
+public void onSensorChanged(SensorEvent event) {
+	// TODO Auto-generated method stub
+	
+}
+
+BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
+
+
+	@Override
+	public void onReceive(Context context, Intent intent) {
+
+		level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);//BATTERY CHARGE
+		scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);//SCALE OF FULL BATTERY CHARGE
+		temp = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1);//BATTERY TEMPERATURE
+		voltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1);//BATTERY VOLTAGE
+		Log.e("BatteryManager", "level is "+level+"/"+scale+", temp is "+temp+", voltage is "+voltage);     
+
+		try {
+
+			timestamp = new Date();
+			csvFormattedDate = csvFormatter.format(timestamp);
+
+			out.newLine();
+			out.append(csvFormattedDate +","+ Integer.toString(level));
+
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+
+};
 
 }

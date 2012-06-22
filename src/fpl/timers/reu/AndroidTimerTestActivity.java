@@ -282,7 +282,7 @@ BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
 
 		try {
 
-			
+			timestamp = new Date();
 			csvFormattedDate = csvFormatter.format(timestamp);
 
 			out.newLine();

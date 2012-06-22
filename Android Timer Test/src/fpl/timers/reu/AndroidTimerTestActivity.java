@@ -31,7 +31,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
   public static String BatteryTag = "Battery";
   public static String SensorTag = "Sensor";
   public static String TimerTag = "Timer";
-  public static String TAG = "Start";
+  public static String StartTag = "Start";
   public static String TaskTag = "Task";
   public static String AccelTag = "Accelerometer";
   /** Called when the activity is first created. */
@@ -71,6 +71,8 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
 	String csvFormattedDate;
 	final int duration=5000;
 	
+	int counter = 0;
+	
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
@@ -99,7 +101,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
   			root = Environment.getExternalStorageDirectory();  
 
 
-  			Log.i("Writter","path.." +root.getAbsolutePath());  
+  			//Log.i("Writter","path.." +root.getAbsolutePath());  
 
 
   			//check sdcard permission  
@@ -112,7 +114,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
   				filewriter = new FileWriter(file);  
   				out = new BufferedWriter(filewriter);
 
-  				out.write("DateTime+" +","+ "BatteryLevel(0-100)");  
+  				out.write("DateTime+" +","+ "BatteryLevel(0-100)" +"Sample");  
 
 
   			}  
@@ -125,7 +127,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
     startTimer.setOnClickListener(new View.OnClickListener() {
       public void onClick(View v) {
         // Executes when the button is clicked
-    	  Log.d(TAG,"Button Clicked");
+    	  //Log.d(StartTag,"Button Clicked");
         startTimer();
       }
     });
@@ -164,8 +166,8 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
    */
   private void startTimer() {
     firsttask = new MyTimerTask1();
-    timer1.schedule(firsttask, 3000, 3000);
-    Log.d(TAG, "On first run - scheduled timer1");
+    timer1.schedule(firsttask, 5000, 5000);
+    Log.d(TimerTag, "On first run - scheduled timer1");
   }
 
   /**
@@ -175,26 +177,26 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
   private void checkTimers() {
     // TODO Auto-generated method stub
     if (on) {
+    	
       timer2.cancel();
-      
       Log.d(TimerTag, "canceled timer2");
       //Log.d(TAG, "On Value=" + on);
       // Scheduling wait time until the next timer triggers, which will turn the
       // accel. on
       timer1 = new Timer();
       firsttask = new MyTimerTask1();
-      timer1.schedule(firsttask, 3000, 3000);
-      Log.d(TimerTag, "scheduled timer1");
+      timer1.schedule(firsttask, 30000, 5000);
+     // Log.d(TimerTag, "scheduled timer1");
       on = false;
     } else {
       timer1.cancel();
       Log.d(TimerTag, "canceled timer1");
-      Log.d(TimerTag, "On Value=" + on);
+     // Log.d(TimerTag, "On Value=" + on);
       // Scheduling on time until the next timer triggers, which will shut the
       // accel. off
       timer2 = new Timer();
       secondtask = new MyTimerTask2();
-      timer2.schedule(secondtask, 5000, 5000);
+      timer2.schedule(secondtask, 5000, 30000);
       Log.d(TimerTag, "scheduled timer2");
       on = true;
     }
@@ -208,7 +210,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
       handler1.post(new Runnable() {
         public void run() {
 
-          Log.d(TaskTag, "Running TimerTask1");
+          Log.d(TaskTag, "Running firsttask");
 
           // back on system thread
           if (activeAccel == false) {
@@ -235,7 +237,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
       handler2.post(new Runnable() {
         public void run() {
 
-          Log.d(TaskTag, "Running TimerTask2");
+          Log.d(TaskTag, "Running secondtask");
 
           // back on system thread
           if (activeAccel == true) {
@@ -284,7 +286,8 @@ BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
 			csvFormattedDate = csvFormatter.format(timestamp);
 
 			out.newLine();
-			out.append(csvFormattedDate +","+ Integer.toString(level));
+			
+			out.append(csvFormattedDate +","+ Integer.toString(level) +"," + ++counter);
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block

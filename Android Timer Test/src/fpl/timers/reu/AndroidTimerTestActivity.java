@@ -65,11 +65,11 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
 	BufferedWriter out;
 
 	//time variables
-	Date timestamp;
-	Date datestamp;
+	Date timestamp = new Date();
+	
 	SimpleDateFormat csvFormatter;
 	String csvFormattedDate;
-	final int interval=5000;
+	final int duration=5000;
 	
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -80,12 +80,17 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
     mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
     
   //----------------------------------------------------------------------------------------------------------------------CSVFile---------------
-  		csvFormatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");  //formatter for CSV timestamp field
+  		csvFormatter = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");  //formatter for CSV timestamp field
   		//crashes with adding  HH:mm:ss
 
-  		datestamp = new Date();
-  		SimpleDateFormat csvFrm = new SimpleDateFormat("yyyy-MM-dd");
-  		String csvFormatFile = csvFrm.format(datestamp);
+  		
+  		SimpleDateFormat fileDate = new SimpleDateFormat("MM-dd-yyyy");
+  		SimpleDateFormat fileTime = new SimpleDateFormat("HH-mm-ss");
+  		
+  		
+  		String formatFileDate = fileDate.format(timestamp);
+  		String formatFileTime = fileTime.format(timestamp);
+  		
 
   		try {  
 
@@ -103,7 +108,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
   				fileDir = new File(root.getAbsolutePath()+"/battery_data/");  
   				fileDir.mkdirs();  
 
-  				file= new File(fileDir, csvFormatFile +"_interval" +"_"+ interval+".csv");  
+  				file= new File(fileDir, formatFileDate +"_duration"+ "-"+ duration+"_"+ formatFileTime + ".csv");  
   				filewriter = new FileWriter(file);  
   				out = new BufferedWriter(filewriter);
 
@@ -142,6 +147,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
     timer2=null;
     
     unregisterReceiver(batteryReceiver);
+    
 	try {
 		out.flush();
 		out.close();
@@ -274,7 +280,7 @@ BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
 
 		try {
 
-			timestamp = new Date();
+			
 			csvFormattedDate = csvFormatter.format(timestamp);
 
 			out.newLine();

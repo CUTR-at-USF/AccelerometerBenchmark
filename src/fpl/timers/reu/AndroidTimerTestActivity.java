@@ -67,11 +67,42 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
 	//time variables
 	Date timestamp = new Date();
 	
-	SimpleDateFormat csvFormatter;
-	String csvFormattedDate;
-	final int duration=5000;
+	SimpleDateFormat csvFormatterDate,csvFormatterTime, fileDate, fileTime;
+	String csvFormattedDate, csvFormattedTime, formatFileDate, formatFileTime;
+	
+	final int interval=300;
 	
 	int counter = 0;
+	
+	BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
+
+
+		@Override
+		public void onReceive(Context context, Intent intent) {
+
+			level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);//BATTERY CHARGE
+			scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);//SCALE OF FULL BATTERY CHARGE
+			temp = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1);//BATTERY TEMPERATURE
+			voltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1);//BATTERY VOLTAGE
+			Log.e("BatteryManager", "level is "+level+"/"+scale/*+", temp is "+temp+", voltage is "+voltage*/);     
+
+			try {
+
+				timestamp = new Date();
+				csvFormattedDate = csvFormatterDate.format(timestamp);
+				csvFormattedTime = csvFormatterTime.format(timestamp);
+
+				out.newLine();
+				
+				out.append(csvFormattedDate +","+ csvFormattedTime +","+ Integer.toString(level) +"," + counter);
+
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+
+	};
 	
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -82,45 +113,14 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
     mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
     
   //----------------------------------------------------------------------------------------------------------------------CSVFile---------------
-  		csvFormatter = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");  //formatter for CSV timestamp field
-  		//crashes with adding  HH:mm:ss
+  		csvFormatterDate = new SimpleDateFormat("MM-dd-yyyy");  //formatter for CSV timestamp field
+  		csvFormatterTime = new SimpleDateFormat("HH:mm:ss");
 
   		
-  		SimpleDateFormat fileDate = new SimpleDateFormat("MM-dd-yyyy");
-  		SimpleDateFormat fileTime = new SimpleDateFormat("HH-mm-ss");
-  		
-  		
-  		String formatFileDate = fileDate.format(timestamp);
-  		String formatFileTime = fileTime.format(timestamp);
+  
   		
 
-  		try {  
-
-
-  			// check for SDcard   
-  			root = Environment.getExternalStorageDirectory();  
-
-
-  			//Log.i("Writter","path.." +root.getAbsolutePath());  
-
-
-  			//check sdcard permission  
-  			if (root.canWrite()){ 
-
-  				fileDir = new File(root.getAbsolutePath()+"/battery_data/");  
-  				fileDir.mkdirs();  
-
-  				file= new File(fileDir, formatFileDate +"_duration"+ "-"+ duration+"_"+ formatFileTime + ".csv");  
-  				filewriter = new FileWriter(file);  
-  				out = new BufferedWriter(filewriter);
-
-  				out.write("DateTime+" +","+ "BatteryLevel(0-100)" +"Sample");  
-
-
-  			}  
-  		} catch (IOException e) {  
-  			Log.e("ERROR:---", "Could not write file to SDCard" + e.getMessage());  
-  		}  
+  		
   		
     startTimer = (Button) findViewById(R.id.btnStartTimer);
     
@@ -165,6 +165,42 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
    * Registers the first timer
    */
   private void startTimer() {
+	  
+	  try {  
+
+		  timestamp = new Date();
+
+			fileDate = new SimpleDateFormat("MM-dd-yyyy");
+	  		fileTime = new SimpleDateFormat("HH-mm-ss");
+	  		
+	  		
+	  		formatFileDate = fileDate.format(timestamp);
+	  		formatFileTime = fileTime.format(timestamp);
+			// check for SDcard   
+			root = Environment.getExternalStorageDirectory();  
+
+
+			//Log.i("Writter","path.." +root.getAbsolutePath());  
+
+
+			//check sdcard permission  
+			if (root.canWrite()){ 
+
+				fileDir = new File(root.getAbsolutePath()+"/battery_data/");  
+				fileDir.mkdirs();  
+
+				file= new File(fileDir, formatFileDate +"_interval"+ "-"+ interval+"_"+ formatFileTime + ".csv");  
+				filewriter = new FileWriter(file);  
+				out = new BufferedWriter(filewriter);
+
+				out.write("Date" +","+ "Time" +","+ "BatteryLevel(0-100)" +","+ "Sample#");  
+
+
+			}  
+		} catch (IOException e) {  
+			Log.e("ERROR:---", "Could not write file to SDCard" + e.getMessage());  
+		}  
+	  
     firsttask = new MyTimerTask1();
     timer1.schedule(firsttask, 5000, 5000);
     Log.d(TimerTag, "On first run - scheduled timer1");
@@ -185,7 +221,8 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
       // accel. on
       timer1 = new Timer();
       firsttask = new MyTimerTask1();
-      timer1.schedule(firsttask, 30000, 5000);
+      //first number is interval, second number is duration
+      timer1.schedule(firsttask, 1000, 10000);
      // Log.d(TimerTag, "scheduled timer1");
       on = false;
     } else {
@@ -196,7 +233,8 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
       // accel. off
       timer2 = new Timer();
       secondtask = new MyTimerTask2();
-      timer2.schedule(secondtask, 5000, 30000);
+      //second number is interval, first duration
+      timer2.schedule(secondtask, 10000, 1000);
       Log.d(TimerTag, "scheduled timer2");
       on = true;
     }
@@ -249,6 +287,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
 
             // TODO - accelerometer would be turned off here
             mSensorManager.unregisterListener(AndroidTimerTestActivity.this,mAccelerometer);
+            ++counter;
             activeAccel = false;
           }// end if
 
@@ -268,33 +307,6 @@ public void onSensorChanged(SensorEvent event) {
 	
 }
 
-BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
 
-
-	@Override
-	public void onReceive(Context context, Intent intent) {
-
-		level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);//BATTERY CHARGE
-		scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);//SCALE OF FULL BATTERY CHARGE
-		temp = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1);//BATTERY TEMPERATURE
-		voltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1);//BATTERY VOLTAGE
-		Log.e("BatteryManager", "level is "+level+"/"+scale+", temp is "+temp+", voltage is "+voltage);     
-
-		try {
-
-			timestamp = new Date();
-			csvFormattedDate = csvFormatter.format(timestamp);
-
-			out.newLine();
-			
-			out.append(csvFormattedDate +","+ Integer.toString(level) +"," + ++counter);
-
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
-
-};
 
 }

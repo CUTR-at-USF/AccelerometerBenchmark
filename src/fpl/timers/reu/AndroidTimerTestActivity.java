@@ -70,11 +70,11 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
 	SimpleDateFormat csvFormatterDate,csvFormatterTime, fileDate, fileTime;
 	String csvFormattedDate, csvFormattedTime, formatFileDate, formatFileTime;
 	
-	final int interval=300;
+	final int interval=10;
 	
 	int counter = 0;
 	
-	BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
+	/*BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
 
 
 		@Override
@@ -84,7 +84,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
 			scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);//SCALE OF FULL BATTERY CHARGE
 			temp = intent.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, -1);//BATTERY TEMPERATURE
 			voltage = intent.getIntExtra(BatteryManager.EXTRA_VOLTAGE, -1);//BATTERY VOLTAGE
-			Log.e("BatteryManager", "level is "+level+"/"+scale/*+", temp is "+temp+", voltage is "+voltage*/);     
+			Log.e("BatteryManager", "level is "+level+"/"+scale+", temp is "+temp+", voltage is "+voltage);     
 
 			try {
 
@@ -102,7 +102,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
 			}
 		}
 
-	};
+	};*/
 	
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -148,7 +148,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
     timer2.cancel();
     timer2=null;
     
-    unregisterReceiver(batteryReceiver);
+    //unregisterReceiver(batteryReceiver);
     
 	try {
 		out.flush();
@@ -193,8 +193,8 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
 				filewriter = new FileWriter(file);  
 				out = new BufferedWriter(filewriter);
 
-				out.write("Date" +","+ "Time" +","+ "BatteryLevel(0-100)" +","+ "Sample#");  
-
+				//out.write("Date" +","+ "Time" +","+ "BatteryLevel(0-100)" +","+ "Sample#");  
+				out.write("State" +","+ "Time"+","+ "Sample#");  
 
 			}  
 		} catch (IOException e) {  
@@ -222,7 +222,20 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
       timer1 = new Timer();
       firsttask = new MyTimerTask1();
       //first number is interval, second number is duration
-      timer1.schedule(firsttask, 1000, 10000);
+      timestamp = new Date();
+		
+		csvFormattedTime = csvFormatterTime.format(timestamp);
+
+		
+	
+      try {
+      	out.newLine();
+			out.append("Accelerometer on"+","+ csvFormattedTime);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+      timer1.schedule(firsttask, 10, 5000);
      // Log.d(TimerTag, "scheduled timer1");
       on = false;
     } else {
@@ -234,7 +247,16 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
       timer2 = new Timer();
       secondtask = new MyTimerTask2();
       //second number is interval, first duration
-      timer2.schedule(secondtask, 10000, 1000);
+      timestamp = new Date();
+      csvFormattedTime = csvFormatterTime.format(timestamp);
+      try {
+      	out.newLine();
+			out.append("Accelerometer off"+","+ csvFormattedTime+"," + counter);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+      timer2.schedule(secondtask, 5000, 10);
       Log.d(TimerTag, "scheduled timer2");
       on = true;
     }
@@ -260,6 +282,8 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
         			mAccelerometer,
         			SensorManager.SENSOR_DELAY_FASTEST);
             activeAccel = true;
+            
+          
 
           }// end if
           checkTimers();
@@ -282,13 +306,15 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
 
             Log.d(AccelTag, "Accelerometer is active - Turn Off");
             // battery();
-            IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-			registerReceiver(batteryReceiver, filter);
+           // IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+			//registerReceiver(batteryReceiver, filter);
 
             // TODO - accelerometer would be turned off here
             mSensorManager.unregisterListener(AndroidTimerTestActivity.this,mAccelerometer);
             ++counter;
             activeAccel = false;
+            
+          
           }// end if
 
           checkTimers();

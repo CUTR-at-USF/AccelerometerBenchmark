@@ -74,7 +74,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
 	
 	int counter = 0;
 	
-	/*BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
+	BroadcastReceiver batteryReceiver = new BroadcastReceiver() {
 
 
 		@Override
@@ -102,7 +102,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
 			}
 		}
 
-	};*/
+	};
 	
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -148,7 +148,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
     timer2.cancel();
     timer2=null;
     
-    //unregisterReceiver(batteryReceiver);
+    unregisterReceiver(batteryReceiver);
     
 	try {
 		out.flush();
@@ -180,7 +180,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
 			root = Environment.getExternalStorageDirectory();  
 
 
-			//Log.i("Writter","path.." +root.getAbsolutePath());  
+			Log.i("Writter","path.." +root.getAbsolutePath());  
 
 
 			//check sdcard permission  
@@ -236,12 +236,12 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
 			e.printStackTrace();
 		}
       timer1.schedule(firsttask, 10, 5000);
-     // Log.d(TimerTag, "scheduled timer1");
+     Log.d(TimerTag, "scheduled timer1");
       on = false;
     } else {
       timer1.cancel();
       Log.d(TimerTag, "canceled timer1");
-     // Log.d(TimerTag, "On Value=" + on);
+     Log.d(TimerTag, "On Value=" + on);
       // Scheduling on time until the next timer triggers, which will shut the
       // accel. off
       timer2 = new Timer();
@@ -305,9 +305,9 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
           if (activeAccel == true) {
 
             Log.d(AccelTag, "Accelerometer is active - Turn Off");
-            // battery();
-           // IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-			//registerReceiver(batteryReceiver, filter);
+           //battery();
+          IntentFilter filter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+			registerReceiver(batteryReceiver, filter);
 
             // TODO - accelerometer would be turned off here
             mSensorManager.unregisterListener(AndroidTimerTestActivity.this,mAccelerometer);

@@ -235,7 +235,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-      timer1.schedule(firsttask, 10, 5000);
+      timer1.schedule(firsttask, 15000, 5000);
      Log.d(TimerTag, "scheduled timer1");
       on = false;
     } else {
@@ -256,7 +256,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-      timer2.schedule(secondtask, 5000, 10);
+      timer2.schedule(secondtask, 5000, 15000);
       Log.d(TimerTag, "scheduled timer2");
       on = true;
     }

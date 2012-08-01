@@ -1,0 +1,13 @@
+Operating instructions:
+The interval is the time in seconds the sensor will sleep
+The duration is the time in seconds the sensor will wake
+
+These values have to be set in the code
+
+By: Francisco J Perez Laras
+Known bugs:
+When clicking back button will crash and any change of orientation.
+Credits and acknowledgments
+REU NSF
+Center for Urban Transportation
+University of South Florida

@@ -1,3 +1,21 @@
+/**
+--
+Application Title: Android Timer Test
+Date: August 1, 2012
+By: Francisco J. Perez Laras
+University of Puerto Rico Bayamon Campus
+Contact: fplaras@gmail.com
+Description: This application turns on and off the accelerometer sensor.
+The sensor is duty cycled at the rate that is defined in the code. When the benchmark is running
+the battery change will be recorded in a file on the sd card.
+Acknowledgements:
+Sean J Barbeau from Center for Urban Transportation Research for the mentorship
+University of South Florida - Department of Computer Science and Engineering for the unique opportunity
+National Science Foundation for the internship offering
+Sprint for the mobile device
+--
+ **/
+
 package fpl.timers.reu;
 
 import java.io.BufferedWriter;
@@ -186,7 +204,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
 			//check sdcard permission  
 			if (root.canWrite()){ 
 
-				fileDir = new File(root.getAbsolutePath()+"/battery_data/");  
+				fileDir = new File(root.getAbsolutePath()+"/Activity_app_battery_data/");  
 				fileDir.mkdirs();  
 
 				file= new File(fileDir, formatFileDate +"_interval"+ "-"+ interval+"_"+ formatFileTime + ".csv");  
@@ -262,6 +280,7 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
     }
   }
 
+  //method to tunr on
   private class MyTimerTask1 extends TimerTask {
 
     @Override
@@ -292,6 +311,8 @@ public class AndroidTimerTestActivity extends Activity implements SensorEventLis
     }
 
   };// end of firsttask
+  
+  //method to turn off
   private class MyTimerTask2 extends TimerTask {
 
     @Override
